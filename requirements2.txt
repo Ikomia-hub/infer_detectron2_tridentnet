@@ -1,3 +1,2 @@
-pycocotools; sys_platform == 'win32'
-git+https://github.com/facebookresearch/detectron2.git@v0.1.2; sys_platform == 'win32'
+git+https://github.com/Ikomia-dev/detectron2.git@v0.3-win10; sys_platform == 'win32'
 git+https://github.com/facebookresearch/detectron2.git@v0.3; sys_platform != 'win32'
