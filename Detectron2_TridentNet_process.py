@@ -1,43 +1,44 @@
-import update_path
+from Detectron2_TridentNet import update_path
 from ikomia import core, dataprocess
 import copy
-# Your imports below
 import os
 import random
 from detectron2.engine import DefaultPredictor
 from detectron2.data import MetadataCatalog
 from detectron2.config import get_cfg
-from TridentNet_git.tridentnet import add_tridentnet_config
+from Detectron2_TridentNet.TridentNet_git.tridentnet import add_tridentnet_config
+
 
 # --------------------
 # - Class to handle the process parameters
 # - Inherits core.CProtocolTaskParam from Ikomia API
 # --------------------
-class Detectron2_TridentNetParam(core.CProtocolTaskParam):
+class Detectron2_TridentNetParam(core.CWorkflowTaskParam):
 
     def __init__(self):
-        core.CProtocolTaskParam.__init__(self)
+        core.CWorkflowTaskParam.__init__(self)
         self.cuda = True
         self.proba = 0.8
 
-    def setParamMap(self, paramMap):
-        self.cuda = int(paramMap["cuda"])
-        self.proba = int(paramMap["proba"])
+    def setParamMap(self, param_map):
+        self.cuda = int(param_map["cuda"])
+        self.proba = int(param_map["proba"])
 
     def getParamMap(self):
-        paramMap = core.ParamMap()
-        paramMap["cuda"] = str(self.cuda)
-        paramMap["proba"] = str(self.proba)
-        return paramMap
+        param_map = core.ParamMap()
+        param_map["cuda"] = str(self.cuda)
+        param_map["proba"] = str(self.proba)
+        return param_map
+
 
 # --------------------
 # - Class which implements the process
 # - Inherits core.CProtocolTask or derived from Ikomia API
 # --------------------
-class Detectron2_TridentNetProcess(dataprocess.CImageProcess2d):
+class Detectron2_TridentNetProcess(dataprocess.C2dImageTask):
 
     def __init__(self, name, param):
-        dataprocess.CImageProcess2d.__init__(self, name)
+        dataprocess.C2dImageTask.__init__(self, name)
         if param is None:
             self.setParam(Detectron2_TridentNetParam())
         else:
@@ -171,10 +172,10 @@ class Detectron2_TridentNetProcess(dataprocess.CImageProcess2d):
 # - Factory class to build process object
 # - Inherits dataprocess.CProcessFactory from Ikomia API
 # --------------------
-class Detectron2_TridentNetProcessFactory(dataprocess.CProcessFactory):
+class Detectron2_TridentNetProcessFactory(dataprocess.CTaskFactory):
 
     def __init__(self):
-        dataprocess.CProcessFactory.__init__(self)
+        dataprocess.CTaskFactory.__init__(self)
         # Set process information as string here
         self.info.name = "Detectron2_TridentNet"
         self.info.shortDescription = "TridentNet inference model of Detectron2 for object detection."

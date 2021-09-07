@@ -1,6 +1,4 @@
 from ikomia import dataprocess
-import Detectron2_TridentNet_process as processMod
-import Detectron2_TridentNet_widget as widgetMod
 
 
 # --------------------
@@ -13,9 +11,11 @@ class Detectron2_TridentNet(dataprocess.CPluginProcessInterface):
         dataprocess.CPluginProcessInterface.__init__(self)
 
     def getProcessFactory(self):
+        from Detectron2_TridentNet.Detectron2_TridentNet_process import Detectron2_TridentNetProcessFactory
         # Instantiate process object
-        return processMod.Detectron2_TridentNetProcessFactory()
+        return Detectron2_TridentNetProcessFactory()
 
     def getWidgetFactory(self):
+        from Detectron2_TridentNet.Detectron2_TridentNet_widget import Detectron2_TridentNetWidgetFactory
         # Instantiate associated widget object
-        return widgetMod.Detectron2_TridentNetWidgetFactory()
+        return Detectron2_TridentNetWidgetFactory()
