@@ -153,13 +153,14 @@ class Detectron2_TridentNetProcess(dataprocess.C2dImageTask):
             # Show Boxes + labels 
             for i in range(len(scores_np_tresh)):
                 color = [random.randint(0,255), random.randint(0,255), random.randint(0,255), 255]
-                properties_text = core.GraphicsTextProperty()
-                properties_text.color = color
-                properties_text.font_size = 7
-                properties_rect = core.GraphicsRectProperty()
-                properties_rect.pen_color = color
-                output_graph.addRectangle(float(boxes_np[i][0]), float(boxes_np[i][1]), float(boxes_np[i][2] - boxes_np[i][0]), float(boxes_np[i][3] - boxes_np[i][1]), properties_rect)
-                output_graph.addText(labels[i],float(boxes_np[i][0]), float(boxes_np[i][1]),properties_text)
+                prop_text = core.GraphicsTextProperty()
+                prop_text.color = color
+                prop_text.font_size = 7
+                output_graph.addText(labels[i], float(boxes_np[i][0]), float(boxes_np[i][1]), prop_text)
+                prop_rect = core.GraphicsRectProperty()
+                prop_rect.pen_color = color
+                prop_rect.category = labels[i]
+                output_graph.addRectangle(float(boxes_np[i][0]), float(boxes_np[i][1]), float(boxes_np[i][2] - boxes_np[i][0]), float(boxes_np[i][3] - boxes_np[i][1]), prop_rect)
 
         # Step progress bar:
         self.emitStepProgress()
