@@ -1,6 +1,6 @@
 from ikomia import utils, core, dataprocess
 from ikomia.utils import qtconversion
-from Detectron2_TridentNet.Detectron2_TridentNet_process import Detectron2_TridentNetParam
+from infer_detectron2_tridentnet.infer_detectron2_tridentnet_process import TridentnetParam
 # PyQt GUI framework
 from PyQt5.QtWidgets import *
 
@@ -9,13 +9,13 @@ from PyQt5.QtWidgets import *
 # - Class which implements widget associated with the process
 # - Inherits core.CProtocolTaskWidget from Ikomia API
 # --------------------
-class Detectron2_TridentNetWidget(core.CWorkflowTaskWidget):
+class TridentnetWidget(core.CWorkflowTaskWidget):
 
     def __init__(self, param, parent):
         core.CWorkflowTaskWidget.__init__(self, parent)
 
         if param is None:
-            self.parameters = Detectron2_TridentNetParam()
+            self.parameters = TridentnetParam()
         else:
             self.parameters = param
 
@@ -66,13 +66,13 @@ class Detectron2_TridentNetWidget(core.CWorkflowTaskWidget):
 # - Factory class to build process widget object
 # - Inherits dataprocess.CWidgetFactory from Ikomia API
 # --------------------
-class Detectron2_TridentNetWidgetFactory(dataprocess.CWidgetFactory):
+class TridentnetWidgetFactory(dataprocess.CWidgetFactory):
 
     def __init__(self):
         dataprocess.CWidgetFactory.__init__(self)
         # Set the name of the process -> it must be the same as the one declared in the process factory class
-        self.name = "Detectron2_TridentNet"
+        self.name = "infer_detectron2_tridentnet"
 
     def create(self, param):
         # Create widget object
-        return Detectron2_TridentNetWidget(param, None)
+        return TridentnetWidget(param, None)

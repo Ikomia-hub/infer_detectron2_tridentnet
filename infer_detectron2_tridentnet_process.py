@@ -1,4 +1,4 @@
-from Detectron2_TridentNet import update_path
+from infer_detectron2_tridentnet import update_path
 from ikomia import core, dataprocess
 import copy
 import os
@@ -6,14 +6,14 @@ import random
 from detectron2.engine import DefaultPredictor
 from detectron2.data import MetadataCatalog
 from detectron2.config import get_cfg
-from Detectron2_TridentNet.TridentNet_git.tridentnet import add_tridentnet_config
+from infer_detectron2_tridentnet.TridentNet_git.tridentnet import add_tridentnet_config
 
 
 # --------------------
 # - Class to handle the process parameters
 # - Inherits core.CProtocolTaskParam from Ikomia API
 # --------------------
-class Detectron2_TridentNetParam(core.CWorkflowTaskParam):
+class TridentnetParam(core.CWorkflowTaskParam):
 
     def __init__(self):
         core.CWorkflowTaskParam.__init__(self)
@@ -35,12 +35,12 @@ class Detectron2_TridentNetParam(core.CWorkflowTaskParam):
 # - Class which implements the process
 # - Inherits core.CProtocolTask or derived from Ikomia API
 # --------------------
-class Detectron2_TridentNetProcess(dataprocess.C2dImageTask):
+class Tridentnet(dataprocess.C2dImageTask):
 
     def __init__(self, name, param):
         dataprocess.C2dImageTask.__init__(self, name)
         if param is None:
-            self.setParam(Detectron2_TridentNetParam())
+            self.setParam(TridentnetParam())
         else:
             self.setParam(copy.deepcopy(param))
 
@@ -173,12 +173,12 @@ class Detectron2_TridentNetProcess(dataprocess.C2dImageTask):
 # - Factory class to build process object
 # - Inherits dataprocess.CProcessFactory from Ikomia API
 # --------------------
-class Detectron2_TridentNetProcessFactory(dataprocess.CTaskFactory):
+class TridentnetFactory(dataprocess.CTaskFactory):
 
     def __init__(self):
         dataprocess.CTaskFactory.__init__(self)
         # Set process information as string here
-        self.info.name = "Detectron2_TridentNet"
+        self.info.name = "infer_detectron2_tridentnet"
         self.info.shortDescription = "TridentNet inference model of Detectron2 for object detection."
         self.info.description = "TridentNet inference model for object detection trained on COCO. " \
                                 "Implementation from Detectron2 (Facebook Research). " \
@@ -204,4 +204,4 @@ class Detectron2_TridentNetProcessFactory(dataprocess.CTaskFactory):
 
     def create(self, param=None):
         # Create process object
-        return Detectron2_TridentNetProcess(self.info.name, param)
+        return Tridentnet(self.info.name, param)
