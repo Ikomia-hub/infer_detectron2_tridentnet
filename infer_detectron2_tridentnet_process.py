@@ -57,6 +57,7 @@ class Tridentnet(dataprocess.C2dImageTask):
 
         # add output
         self.addOutput(dataprocess.CGraphicsOutput())
+        self.addOutput(dataprocess.CBlobMeasureIO())
 
     def getProgressSteps(self, eltCount=1):
         # Function returning the number of progress steps for this process
@@ -70,13 +71,14 @@ class Tridentnet(dataprocess.C2dImageTask):
         random.seed(30)
         
         # Get input :
-        input = self.getInput(0)
-        srcImage = input.getImage()
+        img_input = self.getInput(0)
+        src_image = img_input.getImage()
 
         # Get output :
         output_image = self.getOutput(0)
         output_graph = self.getOutput(1)
         output_graph.setNewLayer("TridentNet")
+        output_measure = self.getOutput(2)
 
         # Get parameters :
         param = self.getParam()
@@ -84,7 +86,7 @@ class Tridentnet(dataprocess.C2dImageTask):
         # predictor
         if not self.loaded:
             print("Chargement du modèle")
-            if param.cuda == False:
+            if not param.cuda:
                 self.cfg.MODEL.DEVICE = "cpu"
                 self.deviceFrom = "cpu"
             else:
@@ -92,7 +94,7 @@ class Tridentnet(dataprocess.C2dImageTask):
             self.loaded = True
             self.predictor = DefaultPredictor(self.cfg)
         # reload model if CUDA check and load without CUDA 
-        elif self.deviceFrom == "cpu" and param.cuda == True:
+        elif self.deviceFrom == "cpu" and param.cuda:
             print("Chargement du modèle")
             self.cfg = get_cfg()
             add_tridentnet_config(self.cfg)
@@ -101,7 +103,7 @@ class Tridentnet(dataprocess.C2dImageTask):
             self.deviceFrom = "gpu"
             self.predictor = DefaultPredictor(self.cfg)
         # reload model if CUDA not check and load with CUDA
-        elif self.deviceFrom == "gpu" and param.cuda == False:
+        elif self.deviceFrom == "gpu" and not param.cuda:
             print("Chargement du modèle")
             self.cfg = get_cfg()
             self.cfg.MODEL.DEVICE = "cpu"
@@ -111,20 +113,20 @@ class Tridentnet(dataprocess.C2dImageTask):
             self.deviceFrom = "cpu"
             self.predictor = DefaultPredictor(self.cfg)
         
-        outputs = self.predictor(srcImage)
+        outputs = self.predictor(src_image)
 
         # get outputs instances
-        output_image.setImage(srcImage)
+        output_image.setImage(src_image)
         boxes = outputs["instances"].pred_boxes
         scores = outputs["instances"].scores
         classes = outputs["instances"].pred_classes
 
         # to numpy
-        if param.cuda :
+        if param.cuda:
             boxes_np = boxes.tensor.cpu().numpy()
             scores_np = scores.cpu().numpy()
             classes_np = classes.cpu().numpy()
-        else :
+        else:
             boxes_np = boxes.tensor.numpy()
             scores_np = scores.numpy()
             classes_np = classes.numpy()
@@ -132,35 +134,54 @@ class Tridentnet(dataprocess.C2dImageTask):
         self.emitStepProgress()
         
         # keep only the results with proba > threshold
-        scores_np_tresh = list()
+        scores_np_thresh = list()
         for s in scores_np:
             if float(s) > param.proba:
-                scores_np_tresh.append(s)
+                scores_np_thresh.append(s)
+
         self.emitStepProgress()
 
-        if len(scores_np_tresh) > 0:
+        if len(scores_np_thresh) > 0:
             # text label with score
             labels = None
             class_names = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]).get("thing_classes")
             if classes is not None and class_names is not None and len(class_names) > 1:
                 labels = [class_names[i] for i in classes]
-            if scores_np_tresh is not None:
-                if labels is None:
-                    labels = ["{:.0f}%".format(s * 100) for s in scores_np_tresh]
-                else:
-                    labels = ["{} {:.0f}%".format(l, s * 100) for l, s in zip(labels, scores_np_tresh)]
+
+            if scores_np_thresh is not None and labels is None:
+                labels = ["{:.0f}%".format(s * 100) for s in scores_np_thresh]
 
             # Show Boxes + labels 
-            for i in range(len(scores_np_tresh)):
-                color = [random.randint(0,255), random.randint(0,255), random.randint(0,255), 255]
+            for i in range(len(scores_np_thresh)):
+                color = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255]
+                box_x = float(boxes_np[i][0])
+                box_y = float(boxes_np[i][1])
+                box_w = float(boxes_np[i][2] - boxes_np[i][0])
+                box_h = float(boxes_np[i][3] - boxes_np[i][1])
+                # label
                 prop_text = core.GraphicsTextProperty()
                 prop_text.color = color
-                prop_text.font_size = 7
-                output_graph.addText(labels[i], float(boxes_np[i][0]), float(boxes_np[i][1]), prop_text)
+                prop_text.font_size = 8
+                prop_text.bold = True
+                output_graph.addText("{} {:.0f}%".format(labels[i], scores_np_thresh[i]*100), box_x, box_y, prop_text)
+                # box
                 prop_rect = core.GraphicsRectProperty()
                 prop_rect.pen_color = color
                 prop_rect.category = labels[i]
-                output_graph.addRectangle(float(boxes_np[i][0]), float(boxes_np[i][1]), float(boxes_np[i][2] - boxes_np[i][0]), float(boxes_np[i][3] - boxes_np[i][1]), prop_rect)
+                graphics_obj = output_graph.addRectangle(box_x, box_y, box_w, box_h, prop_rect)
+                # object results
+                results = []
+                confidence_data = dataprocess.CObjectMeasure(dataprocess.CMeasure(core.MeasureId.CUSTOM, "Confidence"),
+                                                             float(scores_np_thresh[i]),
+                                                             graphics_obj.getId(),
+                                                             labels[i])
+                box_data = dataprocess.CObjectMeasure(dataprocess.CMeasure(core.MeasureId.BBOX),
+                                                      [box_x, box_y, box_w, box_h],
+                                                      graphics_obj.getId(),
+                                                      labels[i])
+                results.append(confidence_data)
+                results.append(box_data)
+                output_measure.addObjectMeasures(results)
 
         # Step progress bar:
         self.emitStepProgress()
@@ -199,7 +220,7 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         self.info.repo = "https://github.com/facebookresearch/detectron2/tree/master/projects/TridentNet"
         self.info.path = "Plugins/Python/Detectron2"
         self.info.iconPath = "icons/detectron2.png"
-        self.info.version = "1.0.1"
+        self.info.version = "1.1.0"
         self.info.keywords = "object,facebook,detectron2,detection,multi,scale"
 
     def create(self, param=None):
