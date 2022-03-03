@@ -178,7 +178,7 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         self.info.license = "Apache-2.0 License"
         self.info.documentationLink = "https://detectron2.readthedocs.io/index.html"
         self.info.repo = "https://github.com/facebookresearch/detectron2/tree/master/projects/TridentNet"
-        self.info.path = "Plugins/Python/Detectron2"
+        self.info.path = "Plugins/Python/Detection"
         self.info.iconPath = "icons/detectron2.png"
         self.info.version = "1.1.0"
         self.info.keywords = "object,facebook,detectron2,detection,multi,scale"
