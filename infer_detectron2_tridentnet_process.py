@@ -45,13 +45,13 @@ class Tridentnet(dataprocess.C2dImageTask):
             self.setParam(copy.deepcopy(param))
 
         # get and set config model
-        self.folder = os.path.dirname(os.path.realpath(__file__)) 
+        self.folder = os.path.dirname(os.path.realpath(__file__))
         self.MODEL_NAME_CONFIG = "tridentnet_fast_R_101_C4_3x"
         self.MODEL_NAME = "model_final_164568"
         self.cfg = get_cfg()
         add_tridentnet_config(self.cfg)
-        self.cfg.merge_from_file(self.folder + "/TridentNet_git/configs/"+self.MODEL_NAME_CONFIG+".yaml") 
-        self.cfg.MODEL.WEIGHTS = self.folder + "/models/"+self.MODEL_NAME+".pkl"
+        self.cfg.merge_from_file(self.folder + "/TridentNet_git/configs/" + self.MODEL_NAME_CONFIG + ".yaml")
+        self.cfg.MODEL.WEIGHTS = "https://dl.fbaipublicfiles.com/detectron2/TridentNet/tridentnet_fast_R_101_C4_3x/148572198/model_final_164568.pkl"
         self.loaded = False
         self.deviceFrom = ""
 
@@ -69,7 +69,7 @@ class Tridentnet(dataprocess.C2dImageTask):
 
         # we use seed to keep the same color for our masks + boxes + labels (same random each time)
         random.seed(30)
-        
+
         # Get input :
         img_input = self.getInput(0)
         src_image = img_input.getImage()
@@ -96,23 +96,15 @@ class Tridentnet(dataprocess.C2dImageTask):
         # reload model if CUDA check and load without CUDA 
         elif self.deviceFrom == "cpu" and param.cuda:
             print("Chargement du modèle")
-            self.cfg = get_cfg()
-            add_tridentnet_config(self.cfg)
-            self.cfg.merge_from_file(self.folder + "/TridentNet_git/configs/"+self.MODEL_NAME_CONFIG+".yaml") 
-            self.cfg.MODEL.WEIGHTS = self.folder + "/models/"+self.MODEL_NAME+".pkl"
             self.deviceFrom = "gpu"
             self.predictor = DefaultPredictor(self.cfg)
         # reload model if CUDA not check and load with CUDA
         elif self.deviceFrom == "gpu" and not param.cuda:
             print("Chargement du modèle")
-            self.cfg = get_cfg()
             self.cfg.MODEL.DEVICE = "cpu"
-            add_tridentnet_config(self.cfg)
-            self.cfg.merge_from_file(self.folder + "/TridentNet_git/configs/"+self.MODEL_NAME_CONFIG+".yaml") 
-            self.cfg.MODEL.WEIGHTS = self.folder + "/models/"+self.MODEL_NAME+".pkl"   
             self.deviceFrom = "cpu"
             self.predictor = DefaultPredictor(self.cfg)
-        
+
         outputs = self.predictor(src_image)
 
         # get outputs instances
@@ -125,34 +117,18 @@ class Tridentnet(dataprocess.C2dImageTask):
         if param.cuda:
             boxes_np = boxes.tensor.cpu().numpy()
             scores_np = scores.cpu().numpy()
-            classes_np = classes.cpu().numpy()
         else:
             boxes_np = boxes.tensor.numpy()
             scores_np = scores.numpy()
-            classes_np = classes.numpy()
-
-        self.emitStepProgress()
-        
-        # keep only the results with proba > threshold
-        scores_np_thresh = list()
-        for s in scores_np:
-            if float(s) > param.proba:
-                scores_np_thresh.append(s)
 
         self.emitStepProgress()
 
-        if len(scores_np_thresh) > 0:
-            # text label with score
-            labels = None
-            class_names = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]).get("thing_classes")
-            if classes is not None and class_names is not None and len(class_names) > 1:
-                labels = [class_names[i] for i in classes]
+        class_names = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]).get("thing_classes")
 
-            if scores_np_thresh is not None and labels is None:
-                labels = ["{:.0f}%".format(s * 100) for s in scores_np_thresh]
-
-            # Show Boxes + labels 
-            for i in range(len(scores_np_thresh)):
+        # Show Boxes + labels
+        for i in range(len(scores_np)):
+            if scores_np[i] > param.proba:
+                label = class_names[classes[i]]
                 color = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255]
                 box_x = float(boxes_np[i][0])
                 box_y = float(boxes_np[i][1])
@@ -163,22 +139,22 @@ class Tridentnet(dataprocess.C2dImageTask):
                 prop_text.color = color
                 prop_text.font_size = 8
                 prop_text.bold = True
-                output_graph.addText("{} {:.0f}%".format(labels[i], scores_np_thresh[i]*100), box_x, box_y, prop_text)
+                output_graph.addText("{} {:.0f}%".format(label, scores_np[i] * 100), box_x, box_y, prop_text)
                 # box
                 prop_rect = core.GraphicsRectProperty()
                 prop_rect.pen_color = color
-                prop_rect.category = labels[i]
+                prop_rect.category = label
                 graphics_obj = output_graph.addRectangle(box_x, box_y, box_w, box_h, prop_rect)
                 # object results
                 results = []
                 confidence_data = dataprocess.CObjectMeasure(dataprocess.CMeasure(core.MeasureId.CUSTOM, "Confidence"),
-                                                             float(scores_np_thresh[i]),
+                                                             float(scores_np[i]),
                                                              graphics_obj.getId(),
-                                                             labels[i])
+                                                             label)
                 box_data = dataprocess.CObjectMeasure(dataprocess.CMeasure(core.MeasureId.BBOX),
                                                       [box_x, box_y, box_w, box_h],
                                                       graphics_obj.getId(),
-                                                      labels[i])
+                                                      label)
                 results.append(confidence_data)
                 results.append(box_data)
                 output_measure.addObjectMeasures(results)
