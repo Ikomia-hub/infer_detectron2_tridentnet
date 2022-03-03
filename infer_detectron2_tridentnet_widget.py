@@ -59,6 +59,7 @@ class TridentnetWidget(core.CWorkflowTaskWidget):
         else:
             self.parameters.cuda = False
         self.parameters.proba = self.proba_spinbox.value()
+        self.parameters.update = True
         self.emitApply(self.parameters)
 
 

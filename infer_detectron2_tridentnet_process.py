@@ -19,6 +19,7 @@ class TridentnetParam(core.CWorkflowTaskParam):
         core.CWorkflowTaskParam.__init__(self)
         self.cuda = True
         self.proba = 0.8
+        self.update = False
 
     def setParamMap(self, param_map):
         self.cuda = int(param_map["cuda"])
@@ -47,13 +48,8 @@ class Tridentnet(dataprocess.C2dImageTask):
         # get and set config model
         self.folder = os.path.dirname(os.path.realpath(__file__))
         self.MODEL_NAME_CONFIG = "tridentnet_fast_R_101_C4_3x"
-        self.MODEL_NAME = "model_final_164568"
-        self.cfg = get_cfg()
-        add_tridentnet_config(self.cfg)
-        self.cfg.merge_from_file(self.folder + "/TridentNet_git/configs/" + self.MODEL_NAME_CONFIG + ".yaml")
-        self.cfg.MODEL.WEIGHTS = "https://dl.fbaipublicfiles.com/detectron2/TridentNet/tridentnet_fast_R_101_C4_3x/148572198/model_final_164568.pkl"
-        self.loaded = False
-        self.deviceFrom = ""
+        self.cfg = None
+        self.predictor = None
 
         # add output
         self.addOutput(dataprocess.CGraphicsOutput())
@@ -83,28 +79,16 @@ class Tridentnet(dataprocess.C2dImageTask):
         # Get parameters :
         param = self.getParam()
 
-        # predictor
-        if not self.loaded:
-            print("Chargement du modèle")
-            if not param.cuda:
-                self.cfg.MODEL.DEVICE = "cpu"
-                self.deviceFrom = "cpu"
-            else:
-                self.deviceFrom = "gpu"
-            self.loaded = True
+        # instantiate or update predictor
+        if param.update or self.predictor is None:
+            self.cfg = get_cfg()
+            add_tridentnet_config(self.cfg)
+            self.cfg.merge_from_file(self.folder + "/TridentNet_git/configs/" + self.MODEL_NAME_CONFIG + ".yaml")
+            self.cfg.MODEL.WEIGHTS = "https://dl.fbaipublicfiles.com/detectron2/TridentNet/" \
+                                     "tridentnet_fast_R_101_C4_3x/148572198/model_final_164568.pkl"
+            self.cfg.MODEL.DEVICE = "cuda" if param.cuda else "cpu"
             self.predictor = DefaultPredictor(self.cfg)
-        # reload model if CUDA check and load without CUDA 
-        elif self.deviceFrom == "cpu" and param.cuda:
-            print("Chargement du modèle")
-            self.deviceFrom = "gpu"
-            self.predictor = DefaultPredictor(self.cfg)
-        # reload model if CUDA not check and load with CUDA
-        elif self.deviceFrom == "gpu" and not param.cuda:
-            print("Chargement du modèle")
-            self.cfg.MODEL.DEVICE = "cpu"
-            self.deviceFrom = "cpu"
-            self.predictor = DefaultPredictor(self.cfg)
-
+            param.update = False
         outputs = self.predictor(src_image)
 
         # get outputs instances
