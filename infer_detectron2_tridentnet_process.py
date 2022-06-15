@@ -180,7 +180,7 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         self.info.repo = "https://github.com/facebookresearch/detectron2/tree/master/projects/TridentNet"
         self.info.path = "Plugins/Python/Detection"
         self.info.iconPath = "icons/detectron2.png"
-        self.info.version = "1.2.0"
+        self.info.version = "1.2.1"
         self.info.keywords = "object,facebook,detectron2,detection,multi,scale"
 
     def create(self, param=None):
