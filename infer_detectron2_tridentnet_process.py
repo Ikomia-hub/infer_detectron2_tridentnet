@@ -52,8 +52,7 @@ class Tridentnet(dataprocess.C2dImageTask):
         self.predictor = None
 
         # add output
-        self.addOutput(dataprocess.CGraphicsOutput())
-        self.addOutput(dataprocess.CBlobMeasureIO())
+        self.addOutput(dataprocess.CObjectDetectionIO())
 
     def getProgressSteps(self):
         # Function returning the number of progress steps for this process
@@ -72,9 +71,8 @@ class Tridentnet(dataprocess.C2dImageTask):
 
         # Get output :
         output_image = self.getOutput(0)
-        output_graph = self.getOutput(1)
-        output_graph.setNewLayer("TridentNet")
-        output_measure = self.getOutput(2)
+        obj_detect_out = self.getOutput(1)
+        obj_detect_out.init("TridentNet", 0)
 
         # Get parameters :
         param = self.getParam()
@@ -89,6 +87,7 @@ class Tridentnet(dataprocess.C2dImageTask):
             self.cfg.MODEL.DEVICE = "cuda" if param.cuda else "cpu"
             self.predictor = DefaultPredictor(self.cfg)
             param.update = False
+
         outputs = self.predictor(src_image)
 
         # get outputs instances
@@ -112,36 +111,13 @@ class Tridentnet(dataprocess.C2dImageTask):
         # Show Boxes + labels
         for i in range(len(scores_np)):
             if scores_np[i] > param.proba:
-                label = class_names[classes[i]]
                 color = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255]
                 box_x = float(boxes_np[i][0])
                 box_y = float(boxes_np[i][1])
                 box_w = float(boxes_np[i][2] - boxes_np[i][0])
                 box_h = float(boxes_np[i][3] - boxes_np[i][1])
-                # label
-                prop_text = core.GraphicsTextProperty()
-                prop_text.color = color
-                prop_text.font_size = 8
-                prop_text.bold = True
-                output_graph.addText("{} {:.0f}%".format(label, scores_np[i] * 100), box_x, box_y, prop_text)
-                # box
-                prop_rect = core.GraphicsRectProperty()
-                prop_rect.pen_color = color
-                prop_rect.category = label
-                graphics_obj = output_graph.addRectangle(box_x, box_y, box_w, box_h, prop_rect)
-                # object results
-                results = []
-                confidence_data = dataprocess.CObjectMeasure(dataprocess.CMeasure(core.MeasureId.CUSTOM, "Confidence"),
-                                                             float(scores_np[i]),
-                                                             graphics_obj.getId(),
-                                                             label)
-                box_data = dataprocess.CObjectMeasure(dataprocess.CMeasure(core.MeasureId.BBOX),
-                                                      [box_x, box_y, box_w, box_h],
-                                                      graphics_obj.getId(),
-                                                      label)
-                results.append(confidence_data)
-                results.append(box_data)
-                output_measure.addObjectMeasures(results)
+                obj_detect_out.addObject(class_names[classes[i]], float(scores_np[i]),
+                                         box_x, box_y, box_w, box_h, color)
 
         # Step progress bar:
         self.emitStepProgress()
@@ -180,7 +156,7 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         self.info.repo = "https://github.com/facebookresearch/detectron2/tree/master/projects/TridentNet"
         self.info.path = "Plugins/Python/Detection"
         self.info.iconPath = "icons/detectron2.png"
-        self.info.version = "1.2.1"
+        self.info.version = "1.3.0"
         self.info.keywords = "object,facebook,detectron2,detection,multi,scale"
 
     def create(self, param=None):
