@@ -116,7 +116,7 @@ class Tridentnet(dataprocess.C2dImageTask):
                 box_y = float(boxes_np[i][1])
                 box_w = float(boxes_np[i][2] - boxes_np[i][0])
                 box_h = float(boxes_np[i][3] - boxes_np[i][1])
-                obj_detect_out.addObject(class_names[classes[i]], float(scores_np[i]),
+                obj_detect_out.addObject(i, class_names[classes[i]], float(scores_np[i]),
                                          box_x, box_y, box_w, box_h, color)
 
         # Step progress bar:
