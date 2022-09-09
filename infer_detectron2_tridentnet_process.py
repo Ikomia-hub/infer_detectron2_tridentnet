@@ -2,7 +2,7 @@ from infer_detectron2_tridentnet import update_path
 from ikomia import core, dataprocess
 import copy
 import os
-import random
+import numpy
 from detectron2.engine import DefaultPredictor
 from detectron2.data import MetadataCatalog
 from detectron2.config import get_cfg
@@ -50,6 +50,8 @@ class Tridentnet(dataprocess.C2dImageTask):
         self.MODEL_NAME_CONFIG = "tridentnet_fast_R_101_C4_3x"
         self.cfg = None
         self.predictor = None
+        self.class_names = None
+        self.colors = None
 
         # add output
         self.addOutput(dataprocess.CObjectDetectionIO())
@@ -86,6 +88,9 @@ class Tridentnet(dataprocess.C2dImageTask):
                                      "tridentnet_fast_R_101_C4_3x/148572198/model_final_164568.pkl"
             self.cfg.MODEL.DEVICE = "cuda" if param.cuda else "cpu"
             self.predictor = DefaultPredictor(self.cfg)
+            self.class_names = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]).get("thing_classes")
+            self.colors = numpy.array(numpy.random.randint(0, 255, (len(self.class_names), 3)))
+            self.colors = [[int(c[0]), int(c[1]), int(c[2])] for c in self.colors]
             param.update = False
 
         outputs = self.predictor(src_image)
@@ -106,18 +111,15 @@ class Tridentnet(dataprocess.C2dImageTask):
 
         self.emitStepProgress()
 
-        class_names = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]).get("thing_classes")
-
         # Show Boxes + labels
         for i in range(len(scores_np)):
             if scores_np[i] > param.proba:
-                color = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255]
                 box_x = float(boxes_np[i][0])
                 box_y = float(boxes_np[i][1])
                 box_w = float(boxes_np[i][2] - boxes_np[i][0])
                 box_h = float(boxes_np[i][3] - boxes_np[i][1])
-                obj_detect_out.addObject(i, class_names[classes[i]], float(scores_np[i]),
-                                         box_x, box_y, box_w, box_h, color)
+                obj_detect_out.addObject(i, self.class_names[classes[i]], float(scores_np[i]),
+                                         box_x, box_y, box_w, box_h, self.colors[classes[i]])
 
         # Step progress bar:
         self.emitStepProgress()
