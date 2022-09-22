@@ -65,7 +65,7 @@ class Tridentnet(dataprocess.C2dImageTask):
         self.beginTaskRun()
 
         # we use seed to keep the same color for our masks + boxes + labels (same random each time)
-        random.seed(30)
+        numpy.random.seed(30)
 
         # Get input :
         img_input = self.getInput(0)
