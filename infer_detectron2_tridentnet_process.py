@@ -7,6 +7,7 @@ from detectron2.engine import DefaultPredictor
 from detectron2.data import MetadataCatalog
 from detectron2.config import get_cfg
 from infer_detectron2_tridentnet.TridentNet_git.tridentnet import add_tridentnet_config
+from infer_detectron2_tridentnet.TridentNet_git.tridentnet import build_trident_resnet_backbone
 
 
 # --------------------
@@ -21,12 +22,12 @@ class TridentnetParam(core.CWorkflowTaskParam):
         self.proba = 0.8
         self.update = False
 
-    def setParamMap(self, param_map):
+    def set_values(self, param_map):
         self.cuda = int(param_map["cuda"])
         self.proba = int(param_map["proba"])
 
-    def getParamMap(self):
-        param_map = core.ParamMap()
+    def get_values(self):
+        param_map = {}
         param_map["cuda"] = str(self.cuda)
         param_map["proba"] = str(self.proba)
         return param_map
@@ -36,14 +37,14 @@ class TridentnetParam(core.CWorkflowTaskParam):
 # - Class which implements the process
 # - Inherits core.CProtocolTask or derived from Ikomia API
 # --------------------
-class Tridentnet(dataprocess.C2dImageTask):
+class Tridentnet(dataprocess.CObjectDetectionTask):
 
     def __init__(self, name, param):
-        dataprocess.C2dImageTask.__init__(self, name)
+        dataprocess.CObjectDetectionTask.__init__(self, name)
         if param is None:
-            self.setParam(TridentnetParam())
+            self.set_param_object(TridentnetParam())
         else:
-            self.setParam(copy.deepcopy(param))
+            self.set_param_object(copy.deepcopy(param))
 
         # get and set config model
         self.folder = os.path.dirname(os.path.realpath(__file__))
@@ -53,31 +54,26 @@ class Tridentnet(dataprocess.C2dImageTask):
         self.class_names = None
         self.colors = None
 
-        # add output
-        self.addOutput(dataprocess.CObjectDetectionIO())
-
-    def getProgressSteps(self):
+    def get_progress_steps(self):
         # Function returning the number of progress steps for this process
         # This is handled by the main progress bar of Ikomia application
         return 2
 
     def run(self):
-        self.beginTaskRun()
+        self.begin_task_run()
 
         # we use seed to keep the same color for our masks + boxes + labels (same random each time)
         numpy.random.seed(30)
 
         # Get input :
-        img_input = self.getInput(0)
-        src_image = img_input.getImage()
+        img_input = self.get_input(0)
+        src_image = img_input.get_image()
 
         # Get output :
-        output_image = self.getOutput(0)
-        obj_detect_out = self.getOutput(1)
-        obj_detect_out.init("TridentNet", 0)
+        output_image = self.get_output(0)
 
         # Get parameters :
-        param = self.getParam()
+        param = self.get_param_object()
 
         # instantiate or update predictor
         if param.update or self.predictor is None:
@@ -92,11 +88,12 @@ class Tridentnet(dataprocess.C2dImageTask):
             self.colors = numpy.array(numpy.random.randint(0, 255, (len(self.class_names), 3)))
             self.colors = [[int(c[0]), int(c[1]), int(c[2])] for c in self.colors]
             param.update = False
+            self.set_names(self.class_names)
 
         outputs = self.predictor(src_image)
 
         # get outputs instances
-        output_image.setImage(src_image)
+        output_image.set_image(src_image)
         boxes = outputs["instances"].pred_boxes
         scores = outputs["instances"].scores
         classes = outputs["instances"].pred_classes
@@ -109,7 +106,7 @@ class Tridentnet(dataprocess.C2dImageTask):
             boxes_np = boxes.tensor.numpy()
             scores_np = scores.numpy()
 
-        self.emitStepProgress()
+        self.emit_step_progress()
 
         # Show Boxes + labels
         for i in range(len(scores_np)):
@@ -118,14 +115,14 @@ class Tridentnet(dataprocess.C2dImageTask):
                 box_y = float(boxes_np[i][1])
                 box_w = float(boxes_np[i][2] - boxes_np[i][0])
                 box_h = float(boxes_np[i][3] - boxes_np[i][1])
-                obj_detect_out.addObject(i, self.class_names[classes[i]], float(scores_np[i]),
-                                         box_x, box_y, box_w, box_h, self.colors[classes[i]])
+                self.add_object(i, classes[i].item(), float(scores_np[i]),
+                                         box_x, box_y, box_w, box_h)
 
         # Step progress bar:
-        self.emitStepProgress()
+        self.emit_step_progress()
 
-        # Call endTaskRun to finalize process
-        self.endTaskRun()
+        # Call end_task_run to finalize process
+        self.end_task_run()
 
 
 # --------------------
@@ -138,7 +135,7 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         dataprocess.CTaskFactory.__init__(self)
         # Set process information as string here
         self.info.name = "infer_detectron2_tridentnet"
-        self.info.shortDescription = "TridentNet inference model of Detectron2 for object detection."
+        self.info.short_description = "TridentNet inference model of Detectron2 for object detection."
         self.info.description = "TridentNet inference model for object detection trained on COCO. " \
                                 "Implementation from Detectron2 (Facebook Research). " \
                                 "Trident Network (TridentNet) aims to generate scale-specific feature maps " \
@@ -154,11 +151,11 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         self.info.journal = "IEEE International Conference on Computer Vision (ICCV)"
         self.info.year = 2019
         self.info.license = "Apache-2.0 License"
-        self.info.documentationLink = "https://detectron2.readthedocs.io/index.html"
+        self.info.documentation_link = "https://detectron2.readthedocs.io/index.html"
         self.info.repo = "https://github.com/facebookresearch/detectron2/tree/master/projects/TridentNet"
         self.info.path = "Plugins/Python/Detection"
-        self.info.iconPath = "icons/detectron2.png"
-        self.info.version = "1.3.1"
+        self.info.icon_path = "icons/detectron2.png"
+        self.info.version = "1.4.0"
         self.info.keywords = "object,facebook,detectron2,detection,multi,scale"
 
     def create(self, param=None):

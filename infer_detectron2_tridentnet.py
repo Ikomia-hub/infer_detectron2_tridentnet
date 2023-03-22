@@ -10,12 +10,12 @@ class IkomiaPlugin(dataprocess.CPluginProcessInterface):
     def __init__(self):
         dataprocess.CPluginProcessInterface.__init__(self)
 
-    def getProcessFactory(self):
+    def get_process_factory(self):
         from infer_detectron2_tridentnet.infer_detectron2_tridentnet_process import TridentnetFactory
         # Instantiate process object
         return TridentnetFactory()
 
-    def getWidgetFactory(self):
+    def get_widget_factory(self):
         from infer_detectron2_tridentnet.infer_detectron2_tridentnet_widget import TridentnetWidgetFactory
         # Instantiate associated widget object
         return TridentnetWidgetFactory()
