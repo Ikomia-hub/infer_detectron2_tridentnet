@@ -23,19 +23,19 @@ class TridentnetWidget(core.CWorkflowTaskWidget):
         self.gridLayout = QGridLayout()
 
         # cuda parameter
-        cuda_label = QLabel("CUDA")
+        cuda_label = QLabel("Cuda")
         self.cuda_ckeck = QCheckBox()
         self.cuda_ckeck.setChecked(True)
 
         # proba parameter
         proba_label = QLabel("Threshold :")
-       
+
         self.proba_spinbox = QDoubleSpinBox()
         self.proba_spinbox.setValue(0.8)
         self.proba_spinbox.setSingleStep(0.1)
         self.proba_spinbox.setMaximum(1)
-        if self.parameters.proba != 0.8:
-            self.proba_spinbox.setValue(self.parameters.proba)
+        if self.parameters.conf_tresh != 0.8:
+            self.proba_spinbox.setValue(self.parameters.conf_tresh)
 
         self.gridLayout.setColumnStretch(0,0)
         self.gridLayout.addWidget(self.cuda_ckeck, 0, 0)
@@ -58,7 +58,7 @@ class TridentnetWidget(core.CWorkflowTaskWidget):
             self.parameters.cuda = True
         else:
             self.parameters.cuda = False
-        self.parameters.proba = self.proba_spinbox.value()
+        self.parameters.conf_tresh = self.proba_spinbox.value()
         self.parameters.update = True
         self.emit_apply(self.parameters)
 

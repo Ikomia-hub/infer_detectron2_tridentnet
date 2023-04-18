@@ -19,17 +19,17 @@ class TridentnetParam(core.CWorkflowTaskParam):
     def __init__(self):
         core.CWorkflowTaskParam.__init__(self)
         self.cuda = True
-        self.proba = 0.8
+        self.conf_tresh = 0.8
         self.update = False
 
     def set_values(self, param_map):
         self.cuda = int(param_map["cuda"])
-        self.proba = int(param_map["proba"])
+        self.conf_tresh = int(param_map["conf_tresh"])
 
     def get_values(self):
         param_map = {}
         param_map["cuda"] = str(self.cuda)
-        param_map["proba"] = str(self.proba)
+        param_map["conf_tresh"] = str(self.conf_tresh)
         return param_map
 
 
@@ -110,7 +110,7 @@ class Tridentnet(dataprocess.CObjectDetectionTask):
 
         # Show Boxes + labels
         for i in range(len(scores_np)):
-            if scores_np[i] > param.proba:
+            if scores_np[i] > param.conf_tresh:
                 box_x = float(boxes_np[i][0])
                 box_y = float(boxes_np[i][1])
                 box_w = float(boxes_np[i][2] - boxes_np[i][0])
