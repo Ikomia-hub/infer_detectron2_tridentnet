@@ -1,4 +1,4 @@
-from ikomia import utils, core, dataprocess
+from ikomia import core, dataprocess
 from ikomia.utils import qtconversion
 from infer_detectron2_tridentnet.infer_detectron2_tridentnet_process import TridentnetParam
 # PyQt GUI framework
@@ -34,8 +34,8 @@ class TridentnetWidget(core.CWorkflowTaskWidget):
         self.proba_spinbox.setValue(0.8)
         self.proba_spinbox.setSingleStep(0.1)
         self.proba_spinbox.setMaximum(1)
-        if self.parameters.conf_tresh != 0.8:
-            self.proba_spinbox.setValue(self.parameters.conf_tresh)
+        if self.parameters.conf_thresh != 0.8:
+            self.proba_spinbox.setValue(self.parameters.conf_thresh)
 
         self.gridLayout.setColumnStretch(0,0)
         self.gridLayout.addWidget(self.cuda_ckeck, 0, 0)
@@ -58,7 +58,7 @@ class TridentnetWidget(core.CWorkflowTaskWidget):
             self.parameters.cuda = True
         else:
             self.parameters.cuda = False
-        self.parameters.conf_tresh = self.proba_spinbox.value()
+        self.parameters.conf_thresh = self.proba_spinbox.value()
         self.parameters.update = True
         self.emit_apply(self.parameters)
 
