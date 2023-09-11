@@ -110,7 +110,7 @@ algo = wf.add_task(name="infer_detectron2_tridentnet", auto_connect=True)
 wf.run_on(url="https://raw.githubusercontent.com/Ikomia-dev/notebooks/main/examples/img/img_work.jpg")
 
 # Iterate over outputs
-for output in algo.get_outputs()
+for output in algo.get_outputs():
     # Print information
     print(output)
     # Export it to JSON
