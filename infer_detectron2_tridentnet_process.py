@@ -142,23 +142,14 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         # Set process information as string here
         self.info.name = "infer_detectron2_tridentnet"
         self.info.short_description = "TridentNet inference model of Detectron2 for object detection."
-        self.info.description = "TridentNet inference model for object detection trained on COCO. " \
-                                "Implementation from Detectron2 (Facebook Research). " \
-                                "Trident Network (TridentNet) aims to generate scale-specific feature maps " \
-                                "with a uniform representational power. We construct a parallel multi-branch " \
-                                "architecture in which each branch shares the same transformation parameters " \
-                                "but with different receptive fields. TridentNet-Fast is a fast approximation " \
-                                "version of TridentNet that could achieve significant improvements without " \
-                                "any additional parameters and computational cost." \
-                                "This Ikomia plugin can make inference of pre-trained model " \
-                                "with ResNet101 backbone + C4 head."
         self.info.authors = "Li, Yanghao and Chen, Yuntao and Wang, Naiyan and Zhang, Zhaoxiang"
         self.info.article = "Scale-Aware Trident Networks for Object Detection"
         self.info.journal = "IEEE International Conference on Computer Vision (ICCV)"
         self.info.year = 2019
         self.info.license = "Apache-2.0 License"
         self.info.documentation_link = "https://detectron2.readthedocs.io/index.html"
-        self.info.repo = "https://github.com/facebookresearch/detectron2/tree/master/projects/TridentNet"
+        self.info.repository = "https://github.com/Ikomia-hub/infer_detectron2_tridentnet"
+        self.info.original_repository = "https://github.com/facebookresearch/detectron2/tree/master/projects/TridentNet"
         self.info.path = "Plugins/Python/Detection"
         self.info.icon_path = "icons/detectron2.png"
         self.info.version = "1.4.0"
