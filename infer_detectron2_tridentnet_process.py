@@ -154,6 +154,8 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         self.info.icon_path = "icons/detectron2.png"
         self.info.version = "1.4.0"
         self.info.keywords = "object,facebook,detectron2,detection,multi,scale"
+        self.info.algo_type = core.AlgoType.INFER
+        self.info.algo_tasks = "OBJECT_DETECTION"
 
     def create(self, param=None):
         # Create process object
