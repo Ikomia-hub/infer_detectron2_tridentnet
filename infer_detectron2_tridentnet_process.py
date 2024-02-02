@@ -152,7 +152,7 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         self.info.original_repository = "https://github.com/facebookresearch/detectron2/tree/master/projects/TridentNet"
         self.info.path = "Plugins/Python/Detection"
         self.info.icon_path = "icons/detectron2.png"
-        self.info.version = "1.4.1"
+        self.info.version = "1.4.2"
         self.info.keywords = "object,facebook,detectron2,detection,multi,scale"
         self.info.algo_type = core.AlgoType.INFER
         self.info.algo_tasks = "OBJECT_DETECTION"
