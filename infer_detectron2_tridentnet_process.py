@@ -79,20 +79,25 @@ class Tridentnet(dataprocess.CObjectDetectionTask):
         param = self.get_param_object()
 
         # Set cache dir in the algorithm folder to simplify deployment
-        os.environ["FVCORE_CACHE"] = os.path.join(os.path.dirname(__file__), "models")
+        os.environ["FVCORE_CACHE"] = os.path.join(
+            os.path.dirname(__file__), "models")
 
         # instantiate or update predictor
         if param.update or self.predictor is None:
             self.cfg = get_cfg()
             add_tridentnet_config(self.cfg)
-            self.cfg.merge_from_file(self.folder + "/TridentNet_git/configs/" + self.MODEL_NAME_CONFIG + ".yaml")
+            self.cfg.merge_from_file(
+                self.folder + "/TridentNet_git/configs/" + self.MODEL_NAME_CONFIG + ".yaml")
             self.cfg.MODEL.WEIGHTS = "https://dl.fbaipublicfiles.com/detectron2/TridentNet/" \
                                      "tridentnet_fast_R_101_C4_3x/148572198/model_final_164568.pkl"
             self.cfg.MODEL.DEVICE = "cuda" if param.cuda else "cpu"
             self.predictor = DefaultPredictor(self.cfg)
-            self.class_names = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0]).get("thing_classes")
-            self.colors = numpy.array(numpy.random.randint(0, 255, (len(self.class_names), 3)))
-            self.colors = [[int(c[0]), int(c[1]), int(c[2])] for c in self.colors]
+            self.class_names = MetadataCatalog.get(
+                self.cfg.DATASETS.TRAIN[0]).get("thing_classes")
+            self.colors = numpy.array(numpy.random.randint(
+                0, 255, (len(self.class_names), 3)))
+            self.colors = [[int(c[0]), int(c[1]), int(c[2])]
+                           for c in self.colors]
             param.update = False
             self.set_names(self.class_names)
 
@@ -122,7 +127,7 @@ class Tridentnet(dataprocess.CObjectDetectionTask):
                 box_w = float(boxes_np[i][2] - boxes_np[i][0])
                 box_h = float(boxes_np[i][3] - boxes_np[i][1])
                 self.add_object(i, classes[i].item(), float(scores_np[i]),
-                                         box_x, box_y, box_w, box_h)
+                                box_x, box_y, box_w, box_h)
 
         # Step progress bar:
         self.emit_step_progress()
@@ -152,7 +157,10 @@ class TridentnetFactory(dataprocess.CTaskFactory):
         self.info.original_repository = "https://github.com/facebookresearch/detectron2/tree/master/projects/TridentNet"
         self.info.path = "Plugins/Python/Detection"
         self.info.icon_path = "icons/detectron2.png"
-        self.info.version = "1.4.2"
+        self.info.version = "1.4.3"
+        # Python compatibility
+        self.info.min_python_version = "3.8.0"
+        self.info.min_ikomia_version = "0.13.0"
         self.info.keywords = "object,facebook,detectron2,detection,multi,scale"
         self.info.algo_type = core.AlgoType.INFER
         self.info.algo_tasks = "OBJECT_DETECTION"
