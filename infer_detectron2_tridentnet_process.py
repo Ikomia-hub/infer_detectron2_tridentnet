@@ -3,6 +3,7 @@ from ikomia import utils, core, dataprocess
 import copy
 import os
 import numpy
+import torch
 from detectron2.engine import DefaultPredictor
 from detectron2.data import MetadataCatalog
 from detectron2.config import get_cfg
@@ -90,7 +91,7 @@ class Tridentnet(dataprocess.CObjectDetectionTask):
                 self.folder + "/TridentNet_git/configs/" + self.MODEL_NAME_CONFIG + ".yaml")
             self.cfg.MODEL.WEIGHTS = "https://dl.fbaipublicfiles.com/detectron2/TridentNet/" \
                                      "tridentnet_fast_R_101_C4_3x/148572198/model_final_164568.pkl"
-            self.cfg.MODEL.DEVICE = "cuda" if param.cuda else "cpu"
+            self.cfg.MODEL.DEVICE = 'cuda' if param.cuda and torch.cuda.is_available() else 'cpu'
             self.predictor = DefaultPredictor(self.cfg)
             self.class_names = MetadataCatalog.get(
                 self.cfg.DATASETS.TRAIN[0]).get("thing_classes")
